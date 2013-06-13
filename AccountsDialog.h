@@ -13,6 +13,7 @@ public:
   AccountsDialog(Accounts *accounts, QWidget *parent = 0);
 private slots:
   void openBrowserWindow();
+  void removeAccount();
 private:
   void setupDefaults();
   void createAccountsList();

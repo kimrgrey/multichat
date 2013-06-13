@@ -7,10 +7,12 @@
 #include <QWebView>
 #include <QMessageBox>
 #include "Vkontakte.h"
+#include "Accounts.h"
 #include "Account.h"
 #include "WebBrowserDialog.h"
 
-WebBrowserDialog::WebBrowserDialog(QWidget *parent) : QDialog(parent) {
+WebBrowserDialog::WebBrowserDialog(Accounts *accounts, QWidget *parent) : QDialog(parent) {
+  this->accounts = accounts;
   this->webview = new QWebView();
   connect(webview, SIGNAL(urlChanged(const QUrl&)), this, SLOT(handleUrlChange(const QUrl&)));
   this->setupDefaults();
@@ -31,7 +33,7 @@ void WebBrowserDialog::handleUrlChange(const QUrl &url) {
       QMessageBox::warning(this, QString::fromUtf8("Авторизация провалена!"), Vkontakte::extractErrorMessage(url));
       this->reject();
     } else {
-      Account::create(url);
+      accounts->add(Account::create(url));
       this->accept();
     }
   }

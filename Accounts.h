@@ -13,6 +13,8 @@ public:
   QVariant data(const QModelIndex &index, int role) const;
 public:
   Account at(int index) const;
+  void add(const Account &account);
+  void remove(int index);
 private:
   QList<Account> accounts;
 };

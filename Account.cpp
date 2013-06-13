@@ -35,6 +35,16 @@ int Account::count() {
   return 0; // just in case of some errors
 }
 
+int Account::lastId() {
+  QSqlQuery query;
+  query.prepare("SELECT seq FROM sqlite_sequence WHERE name = :table");
+  query.bindValue(":table", "accounts");
+  if (query.exec() && query.next()) {
+   return query.value(0).toInt();
+  }
+  return -1; // just in case of some errors
+}
+
 Account Account::find(int id) {
   QSqlQuery query;
   query.prepare("SELECT id, access_token, uid, expiration_period FROM accounts WHERE id = :id");
@@ -70,7 +80,7 @@ Account::Account(int id, const QString &accessToken, const QString &uid, int exp
   this->id = id;
   this->accessToken = accessToken;
   this->uid = uid;
-  this->expirationPeriod = expirationPeriod; 
+  this->expirationPeriod = expirationPeriod;
 }
 
 Account& Account::operator=(const Account &account) {
@@ -81,17 +91,36 @@ Account& Account::operator=(const Account &account) {
   return *this;
 }
 
+bool Account::operator ==(const Account &account) const {
+  return id == account.id;
+}
+
 bool Account::save() {
   QSqlQuery query;
   query.prepare("INSERT INTO accounts(access_token, uid, expiration_period) VALUES (:access_token, :uid, :expiration_period)");
   query.bindValue(":access_token", accessToken);
   query.bindValue(":uid", uid);
   query.bindValue(":expiration_period", expirationPeriod);
-  return query.exec();
+  if (query.exec()) {
+    this->id = Account::lastId();
+    return true;
+  }
+  return false;
 }
 
-bool Account::isSaved() {
-  return true;
+bool Account::destroy() {
+  QSqlQuery query;
+  query.prepare("DELETE FROM accounts WHERE id = :id");
+  query.bindValue(":id", id);
+  if (query.exec()) {
+    this->id = -1;
+    return true;
+  }
+  return false;
+}
+
+bool Account::isSaved() const {
+  return id > 0;
 }
 
 int Account::getId() const {

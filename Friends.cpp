@@ -34,14 +34,20 @@ Friend Friends::at(int index) const {
 }
 
 void Friends::setAccount(const Account &account) {
-  QUrlQuery params;
-  params.addQueryItem("uid", account.getUid());
-  params.addQueryItem("access_token", account.getAccessToken());
-  params.addQueryItem("order", "name");
-  params.addQueryItem("fields", "uid,first_name,last_name,photo,photo_medium,photo_big");
-  QUrl url = Vkontakte::methodUrl("friends.get");
-  url.setQuery(params.query());
-  this->reply = nam->get(QNetworkRequest(url));
+  if (account.isSaved()) {
+    QUrlQuery params;
+    params.addQueryItem("uid", account.getUid());
+    params.addQueryItem("access_token", account.getAccessToken());
+    params.addQueryItem("order", "name");
+    params.addQueryItem("fields", "uid,first_name,last_name,photo,photo_medium,photo_big");
+    QUrl url = Vkontakte::methodUrl("friends.get");
+    url.setQuery(params.query());
+    this->reply = nam->get(QNetworkRequest(url));
+  } else {
+    this->beginResetModel();
+    friends.clear();
+    this->endResetModel();
+  }
 }
 
 bool Friends::checkReply(QNetworkReply *r) {

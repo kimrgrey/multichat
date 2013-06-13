@@ -1,3 +1,4 @@
+#include <QDebug>
 #include "Accounts.h"
 
 Accounts::Accounts(QObject *parent) : QAbstractListModel(parent) {
@@ -23,5 +24,26 @@ QVariant Accounts::data(const QModelIndex &index, int role) const {
 }
 
 Account Accounts::at(int index) const {
+  if (index < 0 || index >= accounts.size()) {
+    return Account();
+  }
   return accounts.at(index);
+}
+
+void Accounts::add(const Account &account) {
+  beginInsertRows(QModelIndex(), accounts.size(), accounts.size());
+  accounts.append(account);
+  endInsertRows();
+}
+
+void Accounts::remove(int index) {
+  if (index < 0 || index >= accounts.size()) {
+    return;
+  }
+  Account account = accounts.at(index);
+  if (account.destroy()) {
+    beginRemoveRows(QModelIndex(), index, index);
+    accounts.removeAt(index);
+    endRemoveRows();
+  }
 }

@@ -10,10 +10,22 @@
 
 AccountsDialog::AccountsDialog(Accounts *accounts, QWidget *parent) : QDialog(parent) {
   this->accounts = accounts;
-  this->webBrowserDialog = new WebBrowserDialog(this);
+  this->webBrowserDialog = new WebBrowserDialog(accounts, this);
   this->createAccountsList();
   this->setupDefaults();
   this->createLayout();
+}
+
+void AccountsDialog::openBrowserWindow() {
+  webBrowserDialog->openAuthorizePage();
+  webBrowserDialog->exec();
+}
+
+void AccountsDialog::removeAccount() {
+    QModelIndex index = accountsList->currentIndex();
+    if (index.isValid()) {
+      accounts->remove(index.row());
+    }
 }
 
 void AccountsDialog::createAccountsList() {
@@ -26,8 +38,9 @@ void AccountsDialog::createLayout() {
   QPushButton *addAccountButton = new QPushButton(QString::fromUtf8("Добавить"));
   connect(addAccountButton, SIGNAL(clicked()), this, SLOT(openBrowserWindow()));
   actionsLayout->addWidget(addAccountButton);
-  // TODO Sad, but removing is not working in this version of code =(
-  actionsLayout->addWidget(new QPushButton(QString::fromUtf8("Удалить")));
+  QPushButton *removeButton = new QPushButton(QString::fromUtf8("Удалить"));
+  connect(removeButton, SIGNAL(clicked()), this, SLOT(removeAccount()));
+  actionsLayout->addWidget(removeButton);
   actionsLayout->addStretch();
   QHBoxLayout *topLayout = new QHBoxLayout();
   topLayout->addWidget(accountsList);
@@ -42,10 +55,6 @@ void AccountsDialog::createLayout() {
   mainLayout->addLayout(bottomLayout);
 }
 
-void AccountsDialog::openBrowserWindow() {
-  webBrowserDialog->openAuthorizePage();
-  webBrowserDialog->exec();
-}
 
 void AccountsDialog::setupDefaults() {
   this->setWindowTitle(QString::fromUtf8("Менеджер аккаунтов - Мультичат ВК"));
