@@ -52,6 +52,7 @@ void MainWindow::sendMessage() {
       Account a = accounts->at(accountsList->currentIndex());
       Friend f =  friends->at(friendIndex.row());
       messages->sendMessage(a, f, messageEdit->text());
+      messageEdit->clear();
     }
 }
 
@@ -80,6 +81,7 @@ void MainWindow::createHistoryList() {
 
 void MainWindow::createMessageEdit() {
   this->messageEdit = new QLineEdit();
+  connect(messageEdit, SIGNAL(returnPressed()), this, SLOT(sendMessage()));
 }
 
 void MainWindow::showAccountsDialog() {
