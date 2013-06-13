@@ -30,6 +30,9 @@ QVariant Friends::data(const QModelIndex &index, int role) const {
 }
 
 Friend Friends::at(int index) const {
+  if (index < 0 || index >= friends.size()) {
+    return new Friend();
+  }
   return friends.at(index);
 }
 
@@ -61,7 +64,7 @@ void Friends::handleReply(QNetworkReply *reply) {
   QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
   QJsonArray response = doc.object().value("response").toArray();
   this->beginResetModel();
-  this->friends = QList<Friend>();
+  friends.clear();
   for (int i = 0; i < response.size(); ++i) {
       QJsonObject o = response.at(i).toObject();
       Friend f;

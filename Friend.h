@@ -21,7 +21,7 @@ public:
   void setMediumPhotoUrl(const QUrl &url);
   QUrl getMediumPhotoUrl() const;
   void setBigPhotoUrl(const QString &url);
-  void setBigPhotoUrl(const QUrl &url); 
+  void setBigPhotoUrl(const QUrl &url);
   QUrl getBigPhotoUrl() const;
   void setFullName(const QString &firstName, const QString &lastName);
   QString getFullName() const;
@@ -29,7 +29,7 @@ public:
   QString getFirstName() const;
   void setLastName(const QString &lastName);
   QString getLastName() const;
-  void reload();
+  bool isValid() const;
 private:
   QString uid;
   QString firstName;

@@ -1,7 +1,7 @@
 #include "Friend.h"
 
 Friend::Friend(QObject *parent) : QObject(parent) {
-  this->uid = -1;
+  this->uid = QString();
   this->firstName = QString();
   this->lastName = QString();
   this->smallPhotoUrl = QUrl();
@@ -109,8 +109,8 @@ QString Friend::getLastName() const {
   return lastName;
 }
 
-void Friend::reload() {
-
+bool Friend::isValid() const {
+  return !uid.isEmpty();
 }
 
 

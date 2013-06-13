@@ -19,6 +19,7 @@ public slots:
   void showSettingsDialog();
 private slots:
   void selectAccount(int index);
+  void selectFriend(const QModelIndex &current, const QModelIndex &previous);
   void sendMessage();
 private:
   void setupDefaults();

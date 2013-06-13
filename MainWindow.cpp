@@ -36,7 +36,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 }
 
 void MainWindow::selectAccount(int index) {
-  friends->setAccount(accounts->at(index));
+  Account account = accounts->at(index);
+  friends->setAccount(account);
+  messages->setAccount(account);
+}
+
+void MainWindow::selectFriend(const QModelIndex &current, const QModelIndex &previous) {
+  Friend f = friends->at(current.row());
+  messages->setFriend(f);
 }
 
 void MainWindow::sendMessage() {
@@ -57,10 +64,18 @@ void MainWindow::createAccountsList() {
 void MainWindow::createFriendsList() {
   this->friendsList = new QListView();
   friendsList->setModel(friends);
+  connect(
+    friendsList->selectionModel(),
+    SIGNAL(currentRowChanged(const QModelIndex&, const QModelIndex&)),
+    this,
+    SLOT(selectFriend(const QModelIndex&, const QModelIndex&))
+  );
 }
 
 void MainWindow::createHistoryList() {
   this->historyList = new QListView();
+  historyList->setWordWrap(true);
+  historyList->setModel(messages);
 }
 
 void MainWindow::createMessageEdit() {

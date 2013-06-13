@@ -13,7 +13,8 @@ HEADERS = MainWindow.h \
   Accounts.h \
   Friend.h \
   Friends.h \
-  Messages.h
+  Messages.h \
+    Message.h
 
 SOURCES = main.cpp \
   MainWindow.cpp \
@@ -25,4 +26,5 @@ SOURCES = main.cpp \
   Accounts.cpp \
   Friend.cpp \
   Friends.cpp \
-  Messages.cpp
+  Messages.cpp \
+    Message.cpp
