@@ -7,7 +7,6 @@ TEMPLATE = app
 HEADERS = MainWindow.h \
   AccountsDialog.h \
   WebBrowserDialog.h \
-  Vkontakte.h \
   SettingsDialog.h \
   Account.h \
   Accounts.h \
@@ -20,7 +19,6 @@ SOURCES = main.cpp \
   MainWindow.cpp \
   AccountsDialog.cpp \
   WebBrowserDialog.cpp \
-  Vkontakte.cpp \
   SettingsDialog.cpp \
   Account.cpp \
   Accounts.cpp \

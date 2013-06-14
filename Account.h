@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QUrl>
 #include <QList>
+#include <QStringList>
 
 #include "Friend.h"
 
@@ -11,6 +12,17 @@ class Vkontakte;
 
 class Account : public QObject {
 public:
+  static QString AUTHORIZE_URL;
+  static QString CALLBACK_URL;
+  static QString METHOD_URL;
+  static QMap<QString, QString> extractFragments(const QUrl &url);
+  static QUrl authorizeUrl(const QString &appId, const QString &permissions = QString());
+  static QUrl authorizeUrl(const QString &appId, const QStringList &permissions = QStringList());
+  static QUrl methodUrl(const QString &methodName);
+  static bool isCallbackUrl(const QUrl &url);
+  static bool isErrorCallback(const QUrl &url);
+  static QString extractErrorMessage(const QUrl &url);
+  static QString extractToken(const QUrl &url);
   static Account create(const QString &accessToken, const QString &uid, int expirationPeriod);
   static Account create(const QUrl &url);
   static QList<Account> list();

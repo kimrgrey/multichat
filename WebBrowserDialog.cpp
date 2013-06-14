@@ -6,7 +6,6 @@
 #include <QSettings>
 #include <QWebView>
 #include <QMessageBox>
-#include "Vkontakte.h"
 #include "Accounts.h"
 #include "Account.h"
 #include "WebBrowserDialog.h"
@@ -23,14 +22,14 @@ void WebBrowserDialog::openAuthorizePage() {
   QSettings settings;
   QString appId = settings.value("authorization/appId").toString();
   QString permissions = settings.value("authorization/permissions").toString();
-  webview->load(Vkontakte::authorizeUrl(appId, permissions));
+  webview->load(Account::authorizeUrl(appId, permissions));
 }
 
 void WebBrowserDialog::handleUrlChange(const QUrl &url) {
-  if (Vkontakte::isCallbackUrl(url)) {
+  if (Account::isCallbackUrl(url)) {
     webview->hide();
-    if (Vkontakte::isErrorCallback(url)) {
-      QMessageBox::warning(this, QString::fromUtf8("Авторизация провалена!"), Vkontakte::extractErrorMessage(url));
+    if (Account::isErrorCallback(url)) {
+      QMessageBox::warning(this, QString::fromUtf8("Авторизация провалена!"), Account::extractErrorMessage(url));
       this->reject();
     } else {
       accounts->add(Account::create(url));

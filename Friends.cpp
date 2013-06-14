@@ -43,7 +43,7 @@ void Friends::setAccount(const Account &account) {
     params.addQueryItem("access_token", account.getAccessToken());
     params.addQueryItem("order", "name");
     params.addQueryItem("fields", "uid,first_name,last_name,photo,photo_medium,photo_big");
-    QUrl url = Vkontakte::methodUrl("friends.get");
+    QUrl url = Account::methodUrl("friends.get");
     url.setQuery(params.query());
     this->reply = nam->get(QNetworkRequest(url));
   } else {

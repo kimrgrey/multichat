@@ -1,8 +1,59 @@
 #include <QDebug>
 #include <QMap>
 #include <QSqlQuery>
-#include "Vkontakte.h"
+#include <QUrlQuery>
 #include "Account.h"
+
+QString Account::AUTHORIZE_URL = "https://oauth.vk.com/authorize";
+QString Account::CALLBACK_URL = "https://oauth.vk.com/blank.html";
+QString Account::METHOD_URL = "https://api.vk.com/method";
+
+QMap<QString, QString> Account::extractFragments(const QUrl &url) {
+  QStringList fragmentsList = url.fragment().split("&");
+  QMap<QString, QString> fragmentsMap;
+  for (int i = 0; i < fragmentsList.size(); ++i) {
+    QStringList fragment = fragmentsList[i].split("=");
+    fragmentsMap.insert(fragment.first(), fragment.last());
+  }
+  return fragmentsMap;
+}
+
+QUrl Account::authorizeUrl(const QString &appId, const QString &permissions) {
+  QUrlQuery params;
+  params.addQueryItem("client_id", appId);
+  params.addQueryItem("scope", permissions);
+  params.addQueryItem("redirect_uri", CALLBACK_URL);
+  params.addQueryItem("display", "page");
+  params.addQueryItem("response_type", "token");
+  QUrl url(AUTHORIZE_URL);
+  url.setQuery(params);
+  return url;
+}
+
+QUrl Account::authorizeUrl(const QString &appId, const QStringList &permissions) {
+  return authorizeUrl(appId, permissions.join(","));
+}
+
+QUrl Account::methodUrl(const QString& methodName) {
+  return QString("%1/%2").arg(METHOD_URL).arg(methodName);
+}
+
+bool Account::isCallbackUrl(const QUrl &url) {
+  QUrl callbackUrl(CALLBACK_URL);
+  return url.host() == callbackUrl.host() && url.path() == callbackUrl.path();
+}
+
+bool Account::isErrorCallback(const QUrl &url) {
+  return extractFragments(url).contains("error");
+}
+
+QString Account::extractErrorMessage(const QUrl& url) {
+  return extractFragments(url).value("error_description");
+}
+
+QString Account::extractToken(const QUrl &url) {
+  return extractFragments(url).value("access_token");
+}
 
 Account Account::create(const QString &accessToken, const QString &uid, int expirationPeriod) {
   Account account(accessToken, uid, expirationPeriod);
@@ -13,7 +64,7 @@ Account Account::create(const QString &accessToken, const QString &uid, int expi
 }
 
 Account Account::create(const QUrl &url) {
-  QMap<QString, QString> fragments = Vkontakte::extractFragments(url);
+  QMap<QString, QString> fragments = Account::extractFragments(url);
   return create(fragments["access_token"], fragments["user_id"], fragments["expires_in"].toInt());
 }
 

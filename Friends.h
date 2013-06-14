@@ -9,7 +9,6 @@
 #include <QNetworkReply>
 #include "Account.h"
 #include "Friend.h"
-#include "Vkontakte.h"
 
 class Friends : public QAbstractListModel {
   Q_OBJECT

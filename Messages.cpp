@@ -4,7 +4,6 @@
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>
-#include "Vkontakte.h"
 #include "Messages.h"
 
 Messages::Messages(QNetworkAccessManager *nam, QObject *parent) : QAbstractListModel(parent) {
@@ -64,7 +63,7 @@ void Messages::loadHistory(const QString &lastMid) {
   if (!lastMid.isEmpty()) {
     params.addQueryItem("mid", lastMid);
   }
-  QUrl url = Vkontakte::methodUrl("messages.getHistory");
+  QUrl url = Account::methodUrl("messages.getHistory");
   url.setQuery(params.query());
   this->historyReply = nam->get(QNetworkRequest(url));
 }
@@ -74,7 +73,7 @@ void Messages::sendMessage(const Account &a, const Friend &f, const QString &tex
   params.addQueryItem("uid", f.getUid());
   params.addQueryItem("message", text);
   params.addQueryItem("access_token", a.getAccessToken());
-  QUrl url = Vkontakte::methodUrl("messages.send");
+  QUrl url = Account::methodUrl("messages.send");
   url.setQuery(params.query());
   this->sendingReply = nam->get(QNetworkRequest(url));
   Message message;
@@ -89,7 +88,7 @@ void Messages::initLongPoll() {
   params.addQueryItem("use_ssl", "1");
   params.addQueryItem("need_pts", "0");
   params.addQueryItem("access_token", a.getAccessToken());
-  QUrl url = Vkontakte::methodUrl("messages.getLongPollServer");
+  QUrl url = Account::methodUrl("messages.getLongPollServer");
   url.setQuery(params.query());
   this->pollReply = nam->get(QNetworkRequest(url));
 }
