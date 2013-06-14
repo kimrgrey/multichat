@@ -28,6 +28,9 @@ public slots:
   void loadHistory(const QString& lastMid = QString());
 private slots:
   void handleReply(QNetworkReply *reply);
+  void handlePollReply(QNetworkReply *reply);
+  void handleSendingReply(QNetworkReply *reply);
+  void handleHistoryReply(QNetworkReply *reply);
 private:
   Account a;
   Friend f;

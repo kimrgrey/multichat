@@ -108,63 +108,75 @@ void Messages::startLongPoll() {
 
 void Messages::handleReply(QNetworkReply *reply) {
   if (reply == pollReply) {
-    QJsonObject doc = QJsonDocument::fromJson(reply->readAll()).object();
-    if (doc.keys().contains("response", Qt::CaseInsensitive)) {
-      QJsonObject response = doc.value("response").toObject();
-      this->pollServer = response.value("server").toVariant().toString();
-      this->pollKey = response.value("key").toVariant().toString();
-      this->pollTs = response.value("ts").toVariant().toString();
-      this->startLongPoll();
-    } else if (doc.keys().contains("ts", Qt::CaseInsensitive)){
-      this->pollTs = doc.value("ts").toVariant().toString();
-      QJsonArray events = doc.value("updates").toArray();
-      for (int i = 0; i < events.size(); ++i) {
-        QJsonArray event = events.at(i).toArray();
-        int eventType = event.first().toVariant().toInt();
-        if (eventType == 4) {
-          QString senderUid = event.at(3).toVariant().toString();
-          if (f.isValid() && f.getUid() == senderUid) {
-            Message message;
-            message.setMid(event.at(1).toVariant().toString());
-            message.setUid(event.at(3).toVariant().toString());
-            message.setText(event.at(6).toVariant().toString());
-            message.setType(Message::INCOMING_MESSAGE);
-            this->add(message);
-          }
+    this->handlePollReply(reply);
+  } else if (reply == sendingReply) {
+    this->handleSendingReply(reply);
+  } else if (reply == historyReply) {
+    this->handleHistoryReply(reply);
+  }
+}
+
+void Messages::handlePollReply(QNetworkReply *reply) {
+  QJsonObject doc = QJsonDocument::fromJson(reply->readAll()).object();
+  if (doc.keys().contains("response", Qt::CaseInsensitive)) {
+    QJsonObject response = doc.value("response").toObject();
+    this->pollServer = response.value("server").toVariant().toString();
+    this->pollKey = response.value("key").toVariant().toString();
+    this->pollTs = response.value("ts").toVariant().toString();
+    this->startLongPoll();
+  } else if (doc.keys().contains("ts", Qt::CaseInsensitive)){
+    this->pollTs = doc.value("ts").toVariant().toString();
+    QJsonArray events = doc.value("updates").toArray();
+    for (int i = 0; i < events.size(); ++i) {
+      QJsonArray event = events.at(i).toArray();
+      int eventType = event.first().toVariant().toInt();
+      if (eventType == 4) {
+        QString senderUid = event.at(3).toVariant().toString();
+        if (f.isValid() && f.getUid() == senderUid) {
+          Message message;
+          message.setMid(event.at(1).toVariant().toString());
+          message.setUid(event.at(3).toVariant().toString());
+          message.setText(event.at(6).toVariant().toString());
+          message.setType(Message::INCOMING_MESSAGE);
+          this->add(message);
         }
       }
-      this->startLongPoll();
-    } else if (doc.keys().contains("failed", Qt::CaseInsensitive)) {
-      this->initLongPoll();
     }
-    reply->deleteLater();
-  } else if (reply == sendingReply) {
-    // TODO We should set mid for sent message here
-    reply->deleteLater();
-  } else if (reply == historyReply) {
-    QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
-    QJsonArray response = doc.object().value("response").toArray();
-    this->beginResetModel();
-    messages.clear();
-    for (int i = response.size() - 1; i >= 0; --i) {
-      QJsonObject o = response.at(i).toObject();
-      Message m;
-      m.setMid(o.value("mid").toVariant().toString());
-      m.setUid(o.value("uid").toVariant().toString());
-      m.setText(o.value("body").toVariant().toString());
-      switch (o.value("out").toVariant().toInt()) {
-        case 0:
-          m.setType(Message::INCOMING_MESSAGE);
-          break;
-        case 1:
-          m.setType(Message::OUTGOING_MESSAGE);
-          break;
-        default:
-          m.setType(Message::UNKNOWN_TYPE);
-      }
-      messages.append(m);
-    }
-    this->endResetModel();
-    reply->deleteLater();
+    this->startLongPoll();
+  } else if (doc.keys().contains("failed", Qt::CaseInsensitive)) {
+    this->initLongPoll();
   }
+  reply->deleteLater();
+}
+
+void Messages::handleSendingReply(QNetworkReply *reply) {
+  // TODO We should set mid for sent message here
+  reply->deleteLater();
+}
+
+void Messages::handleHistoryReply(QNetworkReply *reply) {
+  QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+  QJsonArray response = doc.object().value("response").toArray();
+  this->beginResetModel();
+  messages.clear();
+  for (int i = response.size() - 1; i >= 0; --i) {
+    QJsonObject o = response.at(i).toObject();
+    Message m;
+    m.setMid(o.value("mid").toVariant().toString());
+    m.setUid(o.value("uid").toVariant().toString());
+    m.setText(o.value("body").toVariant().toString());
+    switch (o.value("out").toVariant().toInt()) {
+      case 0:
+        m.setType(Message::INCOMING_MESSAGE);
+        break;
+      case 1:
+        m.setType(Message::OUTGOING_MESSAGE);
+        break;
+      default:
+        m.setType(Message::UNKNOWN_TYPE);
+    }
+    messages.append(m);
+  }
+  this->endResetModel();
+  reply->deleteLater();
 }
