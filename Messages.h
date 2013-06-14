@@ -20,6 +20,10 @@ public:
   void sendMessage(const Account &a, const Friend &f, const QString &text);
   void setAccount(const Account &a);
   void setFriend(const Friend &f);
+  void add(const Message &message);
+private:
+  void initLongPoll();
+  void startLongPoll();
 public slots:
   void loadHistory(const QString& lastMid = QString());
 private slots:
@@ -30,7 +34,11 @@ private:
   QNetworkAccessManager *nam;
   QNetworkReply *historyReply;
   QNetworkReply *sendingReply;
+  QNetworkReply *pollReply;
   QList<Message> messages;
+  QString pollKey;
+  QString pollServer;
+  QString pollTs;
 };
 
 #endif // MESSAGES_H

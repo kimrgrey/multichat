@@ -35,12 +35,19 @@ QVariant Messages::data(const QModelIndex &index, int role) const {
 void Messages::setAccount(const Account &account) {
   this->a = account;
   this->f = new Friend();
-  loadHistory();
+  this->initLongPoll();
+  this->loadHistory();
 }
 
 void Messages::setFriend(const Friend &frnd) {
   this->f = frnd;
-  loadHistory();
+  this->loadHistory();
+}
+
+void Messages::add(const Message &message) {
+  this->beginInsertRows(QModelIndex(), messages.size(), messages.size());
+  messages.append(message);
+  this->endInsertRows();
 }
 
 void Messages::loadHistory(const QString &lastMid) {
@@ -50,7 +57,6 @@ void Messages::loadHistory(const QString &lastMid) {
   if (!a.isSaved() || !f.isValid()) {
     return;
   }
-  qDebug() << "Load history for" << a.getUid() << "and" << f.getUid();
   QUrlQuery params;
   params.addQueryItem("uid", f.getUid());
   params.addQueryItem("access_token", a.getAccessToken());
@@ -64,7 +70,6 @@ void Messages::loadHistory(const QString &lastMid) {
 }
 
 void Messages::sendMessage(const Account &a, const Friend &f, const QString &text) {
-  qDebug() << "Send" << text << "from" << a.getUid() << "to" << f.getFullName() << "(" << f.getUid() << ")";
   QUrlQuery params;
   params.addQueryItem("uid", f.getUid());
   params.addQueryItem("message", text);
@@ -72,14 +77,71 @@ void Messages::sendMessage(const Account &a, const Friend &f, const QString &tex
   QUrl url = Vkontakte::methodUrl("messages.send");
   url.setQuery(params.query());
   this->sendingReply = nam->get(QNetworkRequest(url));
+  Message message;
+  message.setUid(f.getUid());
+  message.setType(Message::OUTGOING_MESSAGE);
+  message.setText(text);
+  this->add(message);
+}
+
+void Messages::initLongPoll() {
+  QUrlQuery params;
+  params.addQueryItem("use_ssl", "1");
+  params.addQueryItem("need_pts", "0");
+  params.addQueryItem("access_token", a.getAccessToken());
+  QUrl url = Vkontakte::methodUrl("messages.getLongPollServer");
+  url.setQuery(params.query());
+  this->pollReply = nam->get(QNetworkRequest(url));
+}
+
+void Messages::startLongPoll() {
+  QUrlQuery params;
+  params.addQueryItem("act", "a_check");
+  params.addQueryItem("key", pollKey);
+  params.addQueryItem("ts", pollTs);
+  params.addQueryItem("wait", "25");
+  params.addQueryItem("mode", "2");
+  QUrl url(QString("https://%1").arg(pollServer));
+  url.setQuery(params.query());
+  this->pollReply = nam->get(QNetworkRequest(url));
 }
 
 void Messages::handleReply(QNetworkReply *reply) {
-  if (reply && reply == sendingReply) {
-    qDebug() << reply->readAll();
-    this->sendingReply = 0;
-    delete reply;
-  } else if (reply && reply == historyReply) {
+  if (reply == pollReply) {
+    QJsonObject doc = QJsonDocument::fromJson(reply->readAll()).object();
+    if (doc.keys().contains("response", Qt::CaseInsensitive)) {
+      QJsonObject response = doc.value("response").toObject();
+      this->pollServer = response.value("server").toVariant().toString();
+      this->pollKey = response.value("key").toVariant().toString();
+      this->pollTs = response.value("ts").toVariant().toString();
+      this->startLongPoll();
+    } else if (doc.keys().contains("ts", Qt::CaseInsensitive)){
+      this->pollTs = doc.value("ts").toVariant().toString();
+      QJsonArray events = doc.value("updates").toArray();
+      for (int i = 0; i < events.size(); ++i) {
+        QJsonArray event = events.at(i).toArray();
+        int eventType = event.first().toVariant().toInt();
+        if (eventType == 4) {
+          QString senderUid = event.at(3).toVariant().toString();
+          if (f.isValid() && f.getUid() == senderUid) {
+            Message message;
+            message.setMid(event.at(1).toVariant().toString());
+            message.setUid(event.at(3).toVariant().toString());
+            message.setText(event.at(6).toVariant().toString());
+            message.setType(Message::INCOMING_MESSAGE);
+            this->add(message);
+          }
+        }
+      }
+      this->startLongPoll();
+    } else if (doc.keys().contains("failed", Qt::CaseInsensitive)) {
+      this->initLongPoll();
+    }
+    reply->deleteLater();
+  } else if (reply == sendingReply) {
+    // TODO We should set mid for sent message here
+    reply->deleteLater();
+  } else if (reply == historyReply) {
     QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
     QJsonArray response = doc.object().value("response").toArray();
     this->beginResetModel();
@@ -103,7 +165,6 @@ void Messages::handleReply(QNetworkReply *reply) {
       messages.append(m);
     }
     this->endResetModel();
-    this->historyReply = 0;
-    delete reply;
+    reply->deleteLater();
   }
 }

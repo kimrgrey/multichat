@@ -31,9 +31,9 @@ Account Accounts::at(int index) const {
 }
 
 void Accounts::add(const Account &account) {
-  beginInsertRows(QModelIndex(), accounts.size(), accounts.size());
+  this->beginInsertRows(QModelIndex(), accounts.size(), accounts.size());
   accounts.append(account);
-  endInsertRows();
+  this->endInsertRows();
 }
 
 void Accounts::remove(int index) {
